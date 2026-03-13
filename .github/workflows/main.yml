@@ -13,10 +13,16 @@ jobs:
 
       - name: Unzip Project
         run: |
-          # Sabse pehle zip dhoond kar extract karega
-          $zip = Get-ChildItem -Filter "*.zip" | Select-Object -First 1
-          powershell Expand-Archive -Path $zip.FullName -DestinationPath "."
-          dir -Recurse # Taaki hume logs mein dikhe files kahan hain
+          # Sabse pehle sari files check karo
+          ls
+          # Zip file ko forcefully dhoond kar extract karo
+          $zipFile = Get-ChildItem -Filter "*.zip" | Select-Object -First 1
+          if ($zipFile) {
+              powershell Expand-Archive -Path $zipFile.FullName -DestinationPath "." -Force
+              echo "Zip extracted successfully!"
+          } else {
+              Write-Error "Bhai, repo mein koi .zip file nahi mili! Check karo main page par upload ki hai ya nahi."
+          }
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
@@ -25,16 +31,14 @@ jobs:
         run: |
           $sln = Get-ChildItem -Recurse -Filter *.sln | Select-Object -First 1
           if ($sln) {
-            # Ye command saare folders ko scan karegi dependencies ke liye
-            msbuild $sln.FullName /p:Configuration=Release /p:Platform=x64 /p:IncludePath="." /p:ExternalIncludePath="."
+            msbuild $sln.FullName /p:Configuration=Release /p:Platform=x64 /p:IncludePath="."
           } else {
-            Write-Error "Bhai, .sln file abhi bhi nahi mili!"
+            Write-Error "SLN file nahi mili extract hone ke baad!"
           }
 
       - name: Upload DLL
         uses: actions/upload-artifact@v4
         with:
-          name: Nature-DLL-Final
+          name: Nature-DLL
           path: "**/*.dll"
           
-        
