@@ -13,16 +13,12 @@ jobs:
 
       - name: Unzip Project
         run: |
-          # Sabse pehle sari files check karo
+          # Sabse pehle sari files check karo logs mein
           ls
-          # Zip file ko forcefully dhoond kar extract karo
-          $zipFile = Get-ChildItem -Filter "*.zip" | Select-Object -First 1
-          if ($zipFile) {
-              powershell Expand-Archive -Path $zipFile.FullName -DestinationPath "." -Force
-              echo "Zip extracted successfully!"
-          } else {
-              Write-Error "Bhai, repo mein koi .zip file nahi mili! Check karo main page par upload ki hai ya nahi."
-          }
+          # Spaces handle karne ke liye quotes ka use
+          powershell "Expand-Archive -Path './*.zip' -DestinationPath '.' -Force"
+          echo "Zip extracted successfully!"
+          ls -Recurse
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
@@ -31,6 +27,7 @@ jobs:
         run: |
           $sln = Get-ChildItem -Recurse -Filter *.sln | Select-Object -First 1
           if ($sln) {
+            # Agar include path ka issue hai toh isse solve hoga
             msbuild $sln.FullName /p:Configuration=Release /p:Platform=x64 /p:IncludePath="."
           } else {
             Write-Error "SLN file nahi mili extract hone ke baad!"
