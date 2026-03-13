@@ -1,0 +1,34 @@
+name: Nature Client Auto-Build
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    # 1. Zip file ko extract karna
+    - name: Unzip Files
+      run: |
+        powershell Expand-Archive -Path "Nature.zip" -DestinationPath "."
+        dir # Check karne ke liye ki files bahar aayi ya nahi
+
+    # 2. MSBuild Setup
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.1
+
+    # 3. Compile Karna (Yahan apne .sln ka naam likhna)
+    - name: Build DLL
+      run: msbuild *.sln /p:Configuration=Release /p:Platform=x64
+
+    # 4. DLL Download Link Banana
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Nature-DLL-Package
+        path: "**/*.dll"
