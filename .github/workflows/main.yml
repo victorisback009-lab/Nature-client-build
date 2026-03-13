@@ -1,38 +1,40 @@
-name: Nature Client Auto-Build
+name: Nature-Client-Final-Build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Unzip Files
-      run: |
-        powershell Expand-Archive -Path "'Nature Client.zip'" -DestinationPath "."
-        dir
+      - name: Unzip Project
+        run: |
+          # Sabse pehle zip dhoond kar extract karega
+          $zip = Get-ChildItem -Filter "*.zip" | Select-Object -First 1
+          powershell Expand-Archive -Path $zip.FullName -DestinationPath "."
+          dir -Recurse # Taaki hume logs mein dikhe files kahan hain
 
-    - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v1.1
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
 
-    - name: Build DLL
-      run: |
-        $sln = Get-ChildItem -Recurse -Filter *.sln | Select-Object -First 1
-        if ($sln) {
-          msbuild $sln.FullName /p:Configuration=Release /p:Platform=x64
-        } else {
-          Write-Error "Bhai, .sln file nahi mili zip ke andar!"
-        }
+      - name: Build DLL
+        run: |
+          $sln = Get-ChildItem -Recurse -Filter *.sln | Select-Object -First 1
+          if ($sln) {
+            # Ye command saare folders ko scan karegi dependencies ke liye
+            msbuild $sln.FullName /p:Configuration=Release /p:Platform=x64 /p:IncludePath="." /p:ExternalIncludePath="."
+          } else {
+            Write-Error "Bhai, .sln file abhi bhi nahi mili!"
+          }
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: Nature-DLL-Package
-        path: "**/*.dll"
-        
+      - name: Upload DLL
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nature-DLL-Final
+          path: "**/*.dll"
+          
         
